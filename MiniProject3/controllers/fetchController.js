@@ -3,14 +3,9 @@ const WeatherModel = require("../models/weatherModel");
 const ForecastModel = require("../models/forecastModel");
 let dbConnect = require("../dbConnect");
 
-
 // fetch weather data for a single city
 const fetchWeatherForCity = async (city) => {
-
-    await WeatherModel.sync();
-    await ForecastModel.sync();
-
-    try {
+  try {
     const response = await axios.get(
       `https://goweather.herokuapp.com/weather/${city}`
     );
@@ -34,10 +29,6 @@ const fetchWeatherForCity = async (city) => {
 
 // Main function to fetch weather data for multiple cities
 const fetchWeatherByCity = async () => {
-
-    await WeatherModel.sync();
-    await ForecastModel.sync();
-
   try {
     const myCities = [
       "Tokyo",
@@ -153,28 +144,17 @@ const fetchWeatherByCity = async () => {
       const city = myCities[i];
 
       if (response) {
-        // Process the weather data
         const { temperature, wind, forecast } = response;
-
         const cityData = {
           city,
           temperature,
           wind,
         };
 
-        const existingCityData = allData.find((data) => data.city === city);
-        if (!existingCityData) {
-          console.log(cityData);
-          allData.push(cityData);
-        } else {
-          // No weather data available
-          console.log(`No weather data available for ${city}. Skipping...`);
-        }
-
-        const day1Data = forecast[0];
-        if (day1Data) {
+        if (forecast.length > 0) {
+          const day1Data = forecast[0];
           const day1Entry = {
-            city: city,
+            city,
             day: day1Data.day,
             temperature: day1Data.temperature,
             wind: day1Data.wind,
@@ -184,21 +164,24 @@ const fetchWeatherByCity = async () => {
         } else {
           console.log(`No day one forecast data available for ${city}`);
         }
+
+        //console.log('city data': cityData);
+        allData.push(cityData);
+      } else {
+        console.log(`No weather data available for ${city}. Skipping...`);
       }
-
-      await WeatherModel.sync();
-      await ForecastModel.sync();
-
-      await WeatherModel.bulkCreate(allData);
-      console.log(await WeatherModel.bulkCreate(allData));
-      console.log(`Added ${allData.length} cities to the weathers table`);
-
-      await ForecastModel.bulkCreate(forecastData);
-      console.log(await ForecastModel.bulkCreate(forecastData));
-      console.log(`Added ${forecastData.length} cities to the forecasts table`);
-
-      // Optionally, save allData to a model or perform further processing
     }
+
+    await WeatherModel.sync();
+    await ForecastModel.sync();
+
+    await WeatherModel.bulkCreate(allData);
+    console.log(`Added ${allData.length} cities to the weathers table`);
+
+    await ForecastModel.bulkCreate(forecastData);
+    console.log(`Added ${forecastData.length} cities to the forecasts table`);
+
+    // Optionally, save allData to a model or perform further processing
   } catch (error) {
     console.error("An error occurred:", error.message);
   }

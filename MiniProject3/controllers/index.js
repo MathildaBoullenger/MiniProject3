@@ -1,5 +1,6 @@
 module.exports = {
     fetchController: require("./fetchController"),
-    weatherController: require("./weatherController")
+    weatherController: require("./weatherController"),
+    forecastController: require("./forecastController")
   };
   
