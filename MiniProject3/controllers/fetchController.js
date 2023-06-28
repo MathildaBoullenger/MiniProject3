@@ -1,9 +1,16 @@
 const axios = require("axios");
 const WeatherModel = require("../models/weatherModel");
+const ForecastModel = require("../models/forecastModel");
+let dbConnect = require("../dbConnect");
 
-// Function to fetch weather data for a single city
+
+// fetch weather data for a single city
 const fetchWeatherForCity = async (city) => {
-  try {
+
+    await WeatherModel.sync();
+    await ForecastModel.sync();
+
+    try {
     const response = await axios.get(
       `https://goweather.herokuapp.com/weather/${city}`
     );
@@ -27,6 +34,10 @@ const fetchWeatherForCity = async (city) => {
 
 // Main function to fetch weather data for multiple cities
 const fetchWeatherByCity = async () => {
+
+    await WeatherModel.sync();
+    await ForecastModel.sync();
+
   try {
     const myCities = [
       "Tokyo",
@@ -135,6 +146,7 @@ const fetchWeatherByCity = async () => {
     const weatherDataResponses = await Promise.all(weatherDataPromises);
 
     const allData = [];
+    const forecastData = [];
 
     for (let i = 0; i < weatherDataResponses.length; i++) {
       const response = weatherDataResponses[i];
@@ -142,11 +154,12 @@ const fetchWeatherByCity = async () => {
 
       if (response) {
         // Process the weather data
-        const { temperature, wind } = response;
+        const { temperature, wind, forecast } = response;
+
         const cityData = {
-          city: city,
-          temperature: temperature,
-          wind: wind,
+          city,
+          temperature,
+          wind,
         };
 
         const existingCityData = allData.find((data) => data.city === city);
@@ -157,17 +170,35 @@ const fetchWeatherByCity = async () => {
           // No weather data available
           console.log(`No weather data available for ${city}. Skipping...`);
         }
+
+        const day1Data = forecast[0];
+        if (day1Data) {
+          const day1Entry = {
+            city: city,
+            day: day1Data.day,
+            temperature: day1Data.temperature,
+            wind: day1Data.wind,
+          };
+          forecastData.push(day1Entry);
+          console.log(`Added day one forecast for ${city}`);
+        } else {
+          console.log(`No day one forecast data available for ${city}`);
+        }
       }
 
+      await WeatherModel.sync();
+      await ForecastModel.sync();
+
+      await WeatherModel.bulkCreate(allData);
+      console.log(await WeatherModel.bulkCreate(allData));
+      console.log(`Added ${allData.length} cities to the weathers table`);
+
+      await ForecastModel.bulkCreate(forecastData);
+      console.log(await ForecastModel.bulkCreate(forecastData));
+      console.log(`Added ${forecastData.length} cities to the forecasts table`);
+
+      // Optionally, save allData to a model or perform further processing
     }
-
-    await WeatherModel.sync();
-
-    await WeatherModel.bulkCreate(allData);
-    console.log(`Added ${allData.length} cities to the database`);
-
-    // Optionally, save allData to a model or perform further processing
-    
   } catch (error) {
     console.error("An error occurred:", error.message);
   }

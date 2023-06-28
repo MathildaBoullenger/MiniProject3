@@ -25,5 +25,5 @@ ${process.env.DB_NAME}`);
 connectMysql();
 module.exports = {
   Sequelize: sequelize,
-  connectMysql,
+  connectMysql
 };

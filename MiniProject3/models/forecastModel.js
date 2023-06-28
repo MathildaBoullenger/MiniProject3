@@ -2,9 +2,9 @@ const { DataTypes, Model } = require("sequelize");
 let dbConnect = require("../dbConnect");
 const sequelizeInstance = dbConnect.Sequelize;
 
-class WeatherModel extends Model {}
+class ForecastModel extends Model {}
 //Sequelize will create this table if it doesn't exist on startup
-WeatherModel.init(
+ForecastModel.init(
   {
     id: {
       type: DataTypes.INTEGER,
@@ -17,23 +17,28 @@ WeatherModel.init(
       allowNull: false,
       required: true,
     },
+    day: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        required: true,
+    },
     temperature: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      required: true,
+        type: DataTypes.STRING,
+        allowNull: false,
+        required: true,
     },
     wind: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      required: true,
-    }
+        type: DataTypes.STRING,
+        allowNull: false,
+        required: true,
+    },
   },
   {
     sequelize: sequelizeInstance,
-    modelName: "weathers", //use lowercase plural format
+    modelName: "forecasts", //use lowercase plural format
     timestamps: true,
     freezeTableName: true,
   }
 );
 
-module.exports = WeatherModel;
+module.exports = ForecastModel;
