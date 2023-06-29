@@ -11,23 +11,21 @@ const fetchWeatherForCity = async (city) => {
     );
     return response.data;
   } catch (error) {
-    // Handle specific errors if needed
     if (error.response) {
-      // Error with response from the server
+      // specific errors
       const status = error.response.status;
       if (status === 404 || status === 503) {
-        // Handle specific status codes
         console.log(`No weather data available for ${city}. Skipping...`);
         return null;
       }
     }
-    // Log or handle other errors
+    // handle other errors
     console.error(`Error fetching weather data for ${city}:`, error.message);
     return null;
   }
 };
 
-// Main function to fetch weather data for multiple cities
+// weather data for multiple cities
 const fetchWeatherByCity = async () => {
   try {
     const myCities = [
@@ -75,7 +73,6 @@ const fetchWeatherByCity = async () => {
       "Izmir",
       "Nagoya",
       "Hyderabad",
-      "Kolkata",
       "Surat",
       "Johannesburg",
       "Wuhan",
@@ -92,7 +89,6 @@ const fetchWeatherByCity = async () => {
       "Hanoi",
       "Milan",
       "Pune",
-      "Baghdad",
       "Changchun",
       "Abidjan",
       "Nairobi",
@@ -129,6 +125,10 @@ const fetchWeatherByCity = async () => {
       "Brussels",
       "Havana",
       "Beirut",
+      "Patna",
+      "Alexandria",
+      "Asuncion",
+      "Kuala Lumpur",
     ];
 
     const weatherDataPromises = myCities.map((city) =>
@@ -145,43 +145,54 @@ const fetchWeatherByCity = async () => {
 
       if (response) {
         const { temperature, wind, forecast } = response;
-        const cityData = {
-          city,
-          temperature,
-          wind,
-        };
+        let cityData = null;
 
-        if (forecast.length > 0) {
-          const day1Data = forecast[0];
-          const day1Entry = {
+        if (temperature !== null && wind !== null) {
+          cityData = {
             city,
-            day: day1Data.day,
-            temperature: day1Data.temperature,
-            wind: day1Data.wind,
+            temperature,
+            wind,
           };
-          forecastData.push(day1Entry);
-          console.log(`Added day one forecast for ${city}`);
-        } else {
-          console.log(`No day one forecast data available for ${city}`);
+
+          allData.push(cityData);
         }
 
-        //console.log('city data': cityData);
-        allData.push(cityData);
-      } else {
-        console.log(`No weather data available for ${city}. Skipping...`);
+        if (forecast) {
+          const day1Data = forecast[0];
+
+          if (
+            day1Data.day !== null &&
+            day1Data.temperature !== null &&
+            day1Data.wind !== null
+          ) {
+            const day1Entry = {
+              city,
+              day: day1Data.day,
+              temperature: day1Data.temperature,
+              wind: day1Data.wind,
+            };
+
+            forecastData.push(day1Entry);
+
+            console.log(`Added day one forecast for ${city}`);
+          } else {
+            console.log(`No day one forecast data available for ${city}`);
+          }
+        } else {
+          console.log(`No weather data available for ${city}. Skipping...`);
+        }
       }
     }
 
+    // adding the data to the model
     await WeatherModel.sync();
     await ForecastModel.sync();
 
     await WeatherModel.bulkCreate(allData);
-    console.log(`Added ${allData.length} cities to the weathers table`);
+    //console.log(`Added ${allData.length} cities to the weathers table`);
 
     await ForecastModel.bulkCreate(forecastData);
-    console.log(`Added ${forecastData.length} cities to the forecasts table`);
-
-    // Optionally, save allData to a model or perform further processing
+    //console.log(`Added ${forecastData.length} cities to the forecasts table`);
   } catch (error) {
     console.error("An error occurred:", error.message);
   }
